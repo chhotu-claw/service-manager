@@ -1,0 +1,60 @@
+services:
+  dashboard:
+    name: "Voice Dashboard"
+    port: 8080
+    systemd: "desktop.service"
+    route: "/dashboard"
+    expose: true
+    health: "http://localhost:8080/health"
+    description: "Jarvis voice server & dashboard"
+
+  jobhq-frontend:
+    name: "Job Hunt HQ"
+    port: 3000
+    systemd: "jobhq.service"
+    route: "/jobhq"
+    expose: true
+    health: "http://localhost:3000"
+    description: "Job hunting app - frontend"
+
+  jobhq-backend:
+    name: "Job Hunt HQ API"
+    port: 3001
+    systemd: "jobhq.service"
+    route: "/jobhq/api"
+    expose: true
+    strip_prefix: true
+    description: "Job hunting app - backend"
+
+  novnc:
+    name: "noVNC"
+    port: 6080
+    systemd: "desktop.service"
+    route: "/vnc"
+    expose: false
+    websocket: true
+    description: "Web-based VNC client"
+
+  openclaw:
+    name: "OpenClaw Gateway"
+    port: 18789
+    systemd: "openclaw-gateway.service"
+    route: null
+    expose: false
+    description: "OpenClaw agent gateway"
+
+  vnc:
+    name: "VNC Server"
+    port: 5901
+    systemd: "desktop.service"
+    route: null
+    expose: false
+    description: "TigerVNC server (localhost only)"
+
+  browser-cdp:
+    name: "Brave CDP"
+    port: 9222
+    systemd: null
+    route: null
+    expose: false
+    description: "Brave browser Chrome DevTools Protocol"
