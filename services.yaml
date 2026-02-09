@@ -51,6 +51,25 @@ services:
     expose: false
     description: "TigerVNC server (localhost only)"
 
+  vault:
+    name: "Chhotu Vault"
+    port: 8888
+    systemd: "vault.service"
+    route: "/vault"
+    expose: true
+    strip_prefix: true
+    health: "http://localhost:8888"
+    description: "Agent activity logs & project docs (MkDocs)"
+
+  cloudflare-tunnel:
+    name: "Cloudflare Tunnel"
+    port: null
+    systemd: "cloudflare-tunnel.service"
+    user_service: true
+    route: null
+    expose: false
+    description: "Named Cloudflare tunnel (chhotu) for chhotu.online"
+
   browser-cdp:
     name: "Brave CDP"
     port: 9222
