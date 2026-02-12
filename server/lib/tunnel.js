@@ -1,70 +1,27 @@
-const { spawn } = require('child_process');
-const fs = require('fs');
+const { execSync } = require('child_process');
 
-let tunnelProc = null;
-let tunnelUrl = null;
-let tunnelStatus = 'stopped';
-let startTime = null;
-
-function notifyTelegram(message) {
-  try {
-    fs.appendFileSync('/tmp/telegram-queue.txt', JSON.stringify({ to: '727735902', text: message }) + '\n');
-  } catch {}
-}
-
-function startTunnel() {
-  if (tunnelProc) return { url: tunnelUrl, status: tunnelStatus };
-
-  tunnelStatus = 'starting';
-  tunnelProc = spawn('cloudflared', ['tunnel', '--url', 'http://localhost:9090'], {
-    stdio: ['ignore', 'pipe', 'pipe']
-  });
-
-  const handleOutput = (data) => {
-    const line = data.toString();
-    const match = line.match(/https:\/\/[a-z0-9-]+\.trycloudflare\.com/);
-    if (match && match[0] !== tunnelUrl) {
-      tunnelUrl = match[0];
-      tunnelStatus = 'connected';
-      startTime = Date.now();
-      console.log(`[tunnel] URL: ${tunnelUrl}`);
-      notifyTelegram(`🚇 Tunnel up: ${tunnelUrl}`);
-    }
-  };
-
-  tunnelProc.stdout.on('data', handleOutput);
-  tunnelProc.stderr.on('data', handleOutput);
-
-  tunnelProc.on('exit', (code) => {
-    console.log(`[tunnel] exited with code ${code}`);
-    tunnelProc = null;
-    tunnelStatus = 'stopped';
-    tunnelUrl = null;
-    // Auto-restart after 5s
-    setTimeout(() => {
-      if (tunnelStatus === 'stopped') startTunnel();
-    }, 5000);
-  });
-
-  return { status: tunnelStatus };
-}
-
-function stopTunnel() {
-  if (tunnelProc) {
-    tunnelProc.kill();
-    tunnelProc = null;
-    tunnelStatus = 'stopped';
-    tunnelUrl = null;
-  }
-  return { status: tunnelStatus };
-}
+const SYSTEMD_UNIT = 'cloudflared.service';
 
 function getTunnelInfo() {
-  return {
-    url: tunnelUrl,
-    status: tunnelStatus,
-    uptime: startTime ? Math.floor((Date.now() - startTime) / 1000) : 0
-  };
+  try {
+    const active = execSync(`systemctl is-active ${SYSTEMD_UNIT} 2>/dev/null`, { encoding: 'utf8' }).trim();
+    const status = active === 'active' ? 'running' : 'stopped';
+
+    let uptime = 0;
+    if (status === 'running') {
+      try {
+        const ts = execSync(
+          `systemctl show ${SYSTEMD_UNIT} --property=ActiveEnterTimestamp --value`,
+          { encoding: 'utf8' }
+        ).trim();
+        if (ts) uptime = Math.floor((Date.now() - new Date(ts).getTime()) / 1000);
+      } catch {}
+    }
+
+    return { status, uptime, managed_by: 'systemd' };
+  } catch {
+    return { status: 'unknown', uptime: 0, managed_by: 'systemd' };
+  }
 }
 
-module.exports = { startTunnel, stopTunnel, getTunnelInfo };
+module.exports = { getTunnelInfo };

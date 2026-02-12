@@ -29,8 +29,10 @@ async function pollHealth(services) {
   for (const [id, svc] of Object.entries(services)) {
     if (svc.health) {
       results[id] = await checkHealth(svc.health);
-    } else {
+    } else if (svc.port) {
       results[id] = await checkPort(svc.port);
+    } else {
+      results[id] = null;
     }
   }
   Object.assign(healthCache, results);

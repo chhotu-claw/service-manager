@@ -3,7 +3,7 @@ const session = require('express-session');
 const path = require('path');
 const { loadConfig, loadServices } = require('./lib/config');
 const { applyCaddyConfig } = require('./lib/caddy');
-const { startTunnel } = require('./lib/tunnel');
+// tunnel is managed by systemd (cloudflared.service), not spawned here
 const { pollHealth } = require('./lib/health');
 const authMiddleware = require('./middleware/auth');
 
@@ -43,9 +43,6 @@ app.listen(PORT, () => {
   applyCaddyConfig(services)
     .then(() => console.log('[caddy] config applied'))
     .catch(err => console.error('[caddy] config failed:', err.message));
-
-  // Start tunnel
-  startTunnel();
 
   // Health polling every 30s
   pollHealth(services);
