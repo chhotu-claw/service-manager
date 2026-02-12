@@ -2,7 +2,7 @@ const express = require('express');
 const session = require('express-session');
 const path = require('path');
 const { loadConfig, loadServices } = require('./lib/config');
-const { applyCaddyConfig } = require('./lib/caddy');
+// Caddy is managed via Caddyfile by Infra — not injected by service-manager
 // tunnel is managed by systemd (cloudflared.service), not spawned here
 const { pollHealth } = require('./lib/health');
 const authMiddleware = require('./middleware/auth');
@@ -38,11 +38,7 @@ app.get('/{*splat}', (req, res) => {
 app.listen(PORT, () => {
   console.log(`[service-manager] listening on port ${PORT}`);
 
-  // Configure Caddy
   const services = loadServices();
-  applyCaddyConfig(services)
-    .then(() => console.log('[caddy] config applied'))
-    .catch(err => console.error('[caddy] config failed:', err.message));
 
   // Health polling every 30s
   pollHealth(services);
