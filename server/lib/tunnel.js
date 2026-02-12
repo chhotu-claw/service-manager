@@ -5,10 +5,10 @@ const SYSTEMD_UNIT = 'cloudflared.service';
 function getTunnelInfo() {
   try {
     const active = execSync(`systemctl is-active ${SYSTEMD_UNIT} 2>/dev/null`, { encoding: 'utf8' }).trim();
-    const status = active === 'active' ? 'running' : 'stopped';
+    const status = active === 'active' ? 'connected' : 'stopped';
 
     let uptime = 0;
-    if (status === 'running') {
+    if (status === 'connected') {
       try {
         const ts = execSync(
           `systemctl show ${SYSTEMD_UNIT} --property=ActiveEnterTimestamp --value`,
