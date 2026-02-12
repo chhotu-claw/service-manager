@@ -1,0 +1,14 @@
+networks:
+  chhotu-net:
+    external: true
+
+services:
+  service-manager:
+    build: .
+    container_name: service-manager
+    restart: always
+    environment:
+      - NODE_ENV=production
+    networks:
+      - chhotu-net
+    mem_limit: 512m
